@@ -1,2 +1,9 @@
----
-:mongo_url: mongodb://plausible_url
+development:
+  sessions:
+    default:
+      uri: mongodb://plausible_uri
+
+production:
+  sessions:
+    default:
+      uri: mongodb://plausible_uri

@@ -1,21 +1,17 @@
-require 'mongo_mapper'
+require 'mongoid'
 
 class User
-  include MongoMapper::Document
+  include Mongoid::Document
   
-  key :email, String
-  key :password, String
-  key :friend_ids, Array
-  key :archived_ids, Array #one set only!
-  key :last_check_date, DateTime
-  key :archive_store_date, DateTime
-  
-  def initialize
-    @twitterlist = TwitterList.new
-  end
+  field :email, type: String
+  field :password, type: String
+  field :friend_ids, type: Array
+  field :archived_ids, type: Array #one set only!
+  field :last_check_date, type: DateTime
+  field :archive_store_date, type: DateTime
   
   def live_list
-    @twitterlist.get_list()
+    #@twitterlist.get_list()
   end
   
   def unfollowed
@@ -29,5 +25,4 @@ class User
       #diff between live_list and stored_list
       #call out to @twitterlist.lookup_ids?
     end
-    
 end
