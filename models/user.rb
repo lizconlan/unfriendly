@@ -1,4 +1,15 @@
-class User #< ActiveRecord:: (?)
+require 'mongo_mapper'
+
+class User
+  include MongoMapper::Document
+  
+  key :email, String
+  key :password, String
+  key :friend_ids, Array
+  key :archived_ids, Array #one set only!
+  key :last_check_date, DateTime
+  key :archive_store_date, DateTime
+  
   def initialize
     @twitterlist = TwitterList.new
   end
@@ -18,4 +29,5 @@ class User #< ActiveRecord:: (?)
       #diff between live_list and stored_list
       #call out to @twitterlist.lookup_ids?
     end
+    
 end
