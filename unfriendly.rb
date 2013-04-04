@@ -3,7 +3,7 @@ require 'sinatra/flash'
 require 'mongoid'
 require 'bcrypt'
 
-class FollowerWatch < Sinatra::Base
+class Unfriendly < Sinatra::Base
   register Sinatra::Flash
   enable :sessions
   set :session_secret, ENV["session_secret"] || "secret string"
@@ -16,7 +16,6 @@ class FollowerWatch < Sinatra::Base
   Mongoid.load!("./config/mongo.yml")
   
   get "/" do
-    #session[:toast] = "wtf"
     haml(:index)
   end
   
@@ -66,10 +65,14 @@ class FollowerWatch < Sinatra::Base
   
   get "/logout/?" do
     session[:user_id] = nil
-    flash[:success] =  "You've logged out"
+    flash.next[:success] =  "You've logged out"
     redirect '/'
   end
   
   get "/check/?" do
+    redirect "/login" unless session[:user_id]
+    
+    user = User.where(email: supplied_email).first
+    redirect "/login" unless user
   end
 end
