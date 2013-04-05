@@ -19,8 +19,7 @@ class Twitter
   end
   
   def initialize(token, secret, verifier)
-    request_token = OAuth::RequestToken.new(Twitter.oauth, token, secret)
-    @access_token = request_token.get_access_token(:oauth_verifier => verifier)
+    @access_token = get_access_token(token, secret, verifier)
   end
   
   def get(url)
@@ -37,7 +36,7 @@ class Twitter
   
   private
     def get_access_token(token, secret, verifier)      
-      request_token = OAuth::RequestToken.new(oauth, token, secret)
+      request_token = OAuth::RequestToken.new(Twitter.oauth, token, secret)
       request_token.get_access_token(:oauth_verifier => verifier)
     end
 end
