@@ -1,0 +1,9 @@
+=styled_flash
+
+/ =request.host_with_port.gsub(/\:80$/, "")
+
+- unless session[:user_name]
+  %a{:href => "twitter_login"}
+    %img{:src => "/images/sign-in-with-twitter-gray.png", :border => "0"}
+- else
+  oh, hai

@@ -1,7 +1,6 @@
 require 'sinatra'
 require 'sinatra/flash'
 require 'mongoid'
-require 'bcrypt'
 
 class Unfriendly < Sinatra::Base
   register Sinatra::Flash
@@ -9,6 +8,7 @@ class Unfriendly < Sinatra::Base
   set :session_secret, ENV["session_secret"] || "secret string"
   
   require './models/user'
+  require './lib/twitter'
   
   # start the server if ruby file executed directly
   run! if app_file == $0
@@ -16,55 +16,35 @@ class Unfriendly < Sinatra::Base
   Mongoid.load!("./config/mongo.yml")
   
   get "/" do
+    if session[:twitter]
+      @twitter = session[:twitter]
+      #raise session[:access_token].params.inspect
+      
+      response = @twitter.get("/1.1/friends/ids.json?screen_name=#{session[:user_name]}")
+      raise JSON.parse(response.body).inspect
+    end
+      
     haml(:index)
   end
   
-  get "/signup/?" do
-    haml(:form)
-  end
-  
-  post "/signup" do
-    supplied_email = params[:email]
-    supplied_password = params[:password]
-    matching = User.where(email: supplied_email)
-    if matching.count > 0
-      flash.now[:alert] = "Email already registered, try a different one"
-      haml(:form)
-    else matching.count > 0
-      password = BCrypt::Password.create(supplied_password)
-      user = User.create(:email => supplied_email, :password => password)
-      user.save!
-      flash.next[:success] =  "Welcome registered user. Please login :)"
-      redirect "/login"
-    end
-  end
-  
-  get "/login/?" do
-    haml(:form)
-  end
-  
-  post "/login" do
-    supplied_email = params[:email]
-    supplied_password = params[:password]
+  get "/twitter_login/?" do
+    request_token = Twitter.get_request_token(request.host_with_port.gsub(/\:80$/, ""))
+    session[:token] = request_token.token
+    session[:secret] = request_token.secret
     
-    user = User.where(email: supplied_email).first
-    if user
-      user_hash = BCrypt::Password.new(user.password)
-      if user_hash == supplied_password
-        session[:user_id] = user.id
-        flash.next[:success] = "Woot! Hello :)"
-        redirect "/"
-      else
-        flash.now[:alert] = "Incorrect username or password"
-      end
-    else
-      flash.now[:alert] = "Incorrect username or password"
-    end
-    haml(:form)
+    redirect request_token.authorize_url
+  end
+  
+  get "/sign-in-with-twitter/?" do
+    @twitter = Twitter.new(session[:token], session[:secret], params[:oauth_verifier])
+    session[:twitter] = @twitter
+    session[:user_name] = @twitter.screen_name
+    session[:user_id] = @twitter.user_id
+    redirect "/"
   end
   
   get "/logout/?" do
-    session[:user_id] = nil
+    session.clear
     flash.next[:success] =  "You've logged out"
     redirect '/'
   end
