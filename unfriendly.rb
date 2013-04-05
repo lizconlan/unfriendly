@@ -20,7 +20,7 @@ class Unfriendly < Sinatra::Base
       @twitter = session[:twitter]
       #raise session[:access_token].params.inspect
       
-      response = @twitter.get("/1.1/friends/ids.json?screen_name=#{session[:user_name]}")
+      response = @twitter.get("/1.1/friends/ids.json?screen_name=#{@twitter.screen_name}")
       raise JSON.parse(response.body).inspect
     end
       
@@ -37,9 +37,9 @@ class Unfriendly < Sinatra::Base
   
   get "/sign-in-with-twitter/?" do
     @twitter = Twitter.new(session[:token], session[:secret], params[:oauth_verifier])
+    session[:token] = nil
+    session[:secret] = nil
     session[:twitter] = @twitter
-    session[:user_name] = @twitter.screen_name
-    session[:user_id] = @twitter.user_id
     redirect "/"
   end
   
@@ -50,7 +50,7 @@ class Unfriendly < Sinatra::Base
   end
   
   get "/check/?" do
-    redirect "/login" unless session[:user_id]
+    redirect "/login" unless session[:twitter]
     
     user = User.where(email: supplied_email).first
     redirect "/login" unless user
