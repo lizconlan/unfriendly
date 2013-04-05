@@ -7,7 +7,6 @@ GEM
     activesupport (3.2.13)
       i18n (= 0.6.1)
       multi_json (~> 1.0)
-    bcrypt-ruby (3.0.1)
     bson (1.8.4)
     bson_ext (1.8.4)
       bson (~> 1.8.4)
@@ -16,7 +15,6 @@ GEM
       tilt
     i18n (0.6.1)
     json (1.7.7)
-    mime-types (1.21)
     mongoid (3.1.2)
       activemodel (~> 3.2)
       moped (~> 1.4.2)
@@ -30,8 +28,6 @@ GEM
     rack-protection (1.5.0)
       rack
     rake (10.0.4)
-    rest-client (1.6.7)
-      mime-types (>= 1.16)
     sinatra (1.4.2)
       rack (~> 1.5, >= 1.5.2)
       rack-protection (~> 1.4)
@@ -45,7 +41,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  bcrypt-ruby
   bson
   bson_ext
   haml
@@ -53,6 +48,5 @@ DEPENDENCIES
   mongoid
   oauth
   rake
-  rest-client
   sinatra
   sinatra-flash
