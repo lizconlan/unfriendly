@@ -11,3 +11,9 @@ gem 'bson'
 gem 'bson_ext'
 gem 'haml'
 gem 'sinatra-flash'
+
+group :test do
+  gem 'minitest', :require => 'minitest'
+  gem 'simplecov', '0.7.1'
+  gem "mocha", :require => false
+end
