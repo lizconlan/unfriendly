@@ -52,6 +52,14 @@ class Unfriendly < Sinatra::Base
     data = JSON.parse(response.body)
     @current_list = data["ids"]
     
+    # go again (and again, and again...) if there are more things still to fetch
+    # default retrieval limit per request is 5,000 (correct at time of writing)
+    while data["next_cursor_str"] != "0"
+      response = @twitter.get("/1.1/friends/ids.json?screen_name=#{@twitter.screen_name}&cursor=#{data["next_cursor_str"]}")
+      data = JSON.parse(response.body)
+      @current_list += data["ids"]
+    end
+    
     if @user.friend_ids.nil? or @user.friend_ids.empty?
       #new user, hello!
       @user.friend_ids = @current_list
