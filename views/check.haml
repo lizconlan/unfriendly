@@ -10,20 +10,9 @@
 .activity
   -if @followed_accounts
     %p= "You started following #{@followed.count} new accounts:"
-    -@followed_accounts.each do |account|
-      %li
-        %a{:href=> "http://twitter.com/#{account[:screen_name]}"}
-          %img{:src => account[:profile_image]}
-          =account[:name]
-          ="(@#{account[:screen_name]})"
+    =haml(:"_account", :locals => {:accounts => @followed_accounts})
   
   -if @unfollowed_accounts
     %p= "You unfollowed #{@unfollowed.count} accounts:"
-    %ul
-      -@unfollowed_accounts.each do |account|
-        %li
-          %a{:href=> "http://twitter.com/#{account[:screen_name]}"}
-            %img{:src => account[:profile_image]}
-            =account[:name]
-            ="(@#{account[:screen_name]})"
+    =haml(:"_account", :locals => {:accounts => @unfollowed_accounts})
   

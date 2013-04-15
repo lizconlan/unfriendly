@@ -1,0 +1,6 @@
+- accounts.each do |account|
+  %li
+    %a{:href=> "http://twitter.com/#{account[:screen_name]}"}
+      %img{:src => account[:profile_image]}
+      =account[:name]
+      ="(@#{account[:screen_name]})"
