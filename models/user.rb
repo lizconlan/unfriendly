@@ -2,7 +2,7 @@ require 'mongoid'
 
 class User
   include Mongoid::Document
-  embeds_many :follower_changes
+  embeds_many :following_changes
   
   field :email, type: String
   field :screen_name, type: String
@@ -11,7 +11,7 @@ class User
   field :friend_ids, type: Array
 end
 
-class FollowerChange
+class FollowingChange
   include Mongoid::Document
   embedded_in :user
   
