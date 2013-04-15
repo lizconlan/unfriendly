@@ -1,7 +1,6 @@
 require 'mongoid'
 
 class User
-  include Enumerable
   include Mongoid::Document
   embeds_many :follower_changes
   
