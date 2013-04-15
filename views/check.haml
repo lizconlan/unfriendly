@@ -8,9 +8,22 @@
   %p= "Since #{@change.check_date.strftime("%B %d, %Y")}..."
 
 .activity
-  -if @followed_screen_names
-    %p= "You started following #{@followed.count} new accounts: #{format_screen_name_array(@followed_screen_names)}"
+  -if @followed_accounts
+    %p= "You started following #{@followed.count} new accounts:"
+    -@followed_accounts.each do |account|
+      %li
+        %a{:href=> "http://twitter.com/#{account[:screen_name]}"}
+          %img{:src => account[:profile_image]}
+          =account[:name]
+          ="(@#{account[:screen_name]})"
   
-  -if @unfollowed_screen_names
-    %p= "You unfollowed #{@unfollowed.count} accounts: #{format_screen_name_array(@unfollowed_screen_names)}"
+  -if @unfollowed_accounts
+    %p= "You unfollowed #{@unfollowed.count} accounts:"
+    %ul
+      -@unfollowed_accounts.each do |account|
+        %li
+          %a{:href=> "http://twitter.com/#{account[:screen_name]}"}
+            %img{:src => account[:profile_image]}
+            =account[:name]
+            ="(@#{account[:screen_name]})"
   

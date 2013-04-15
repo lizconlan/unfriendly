@@ -16,24 +16,6 @@ class Unfriendly < Sinatra::Base
   
   Mongoid.load!("./config/mongo.yml")
   
-  helpers do
-    def format_screen_name_array(arr)
-      output = []
-      arr.each_with_index do |name, index|
-        output << %Q|<a href="http://twitter.com/#{name}">@#{name}</a>|
-        case index
-        when arr.size-1
-          #last item, add no extras
-        when arr.size-2
-          output << " and "
-        else
-          output << ", "
-        end
-      end
-      output.join("")
-    end
-  end
-  
   get "/" do
     haml(:index)
   end
@@ -103,17 +85,21 @@ class Unfriendly < Sinatra::Base
       end
       
       if @followed && @followed.count > 0
-        response = @twitter.get("/1.1/users/lookup.json?user_id=#{@followed.join(",")}")
-        data = JSON.parse(response.body)
-        
-        @followed_screen_names = data.map{ |x| x["screen_name"]}
+        data = []
+        @followed.each_slice(100) do |batch|
+          response = @twitter.get("/1.1/users/lookup.json?user_id=#{batch.join(",")}")
+          data += JSON.parse(response.body)
+        end
+        @followed_accounts = data.map{ |x| {:screen_name => x["screen_name"], :name => x["name"], :profile_image => x["profile_image_url"], :protected => x["protected"]}}
       end
       
       if @unfollowed && @unfollowed.count > 0
-        response = @twitter.get("/1.1/users/lookup.json?user_id=#{@unfollowed.join(",")}")
-        data = JSON.parse(response.body)
-        
-        @unfollowed_screen_names = data.map{ |x| x["screen_name"]}
+        data = []
+        @unfollowed.each_slice(100) do |batch|
+          response = @twitter.get("/1.1/users/lookup.json?user_id=#{batch.join(",")}")
+          data += JSON.parse(response.body)
+        end
+        @unfollowed_accounts = data.map{ |x| {:screen_name => x["screen_name"], :name => x["name"], :profile_image => x["profile_image_url"], :protected => x["protected"]}}
       end
     end
     
