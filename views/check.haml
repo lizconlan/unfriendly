@@ -1,0 +1,16 @@
+=styled_flash
+
+%p= "Hello #{@user.screen_name}"
+  
+%p= "You currently follow #{@current_list.count} people on Twitter."
+
+-if @change
+  %p= "Since #{@change.check_date.strftime("%B %d, %Y")}..."
+
+.activity
+  -if @followed_screen_names
+    %p= "You started following #{@followed.count} new accounts: #{format_screen_name_array(@followed_screen_names)}"
+  
+  -if @unfollowed_screen_names
+    %p= "You unfollowed #{@unfollowed.count} accounts: #{format_screen_name_array(@unfollowed_screen_names)}"
+  
