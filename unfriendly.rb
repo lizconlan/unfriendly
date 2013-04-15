@@ -48,22 +48,12 @@ class Unfriendly < Sinatra::Base
     @twitter = session[:twitter]
     @user = User.find_or_create_by(:twitter_id => @twitter.user_id, :screen_name => @twitter.screen_name)
     
-    response = @twitter.get("/1.1/friends/ids.json?screen_name=#{@twitter.screen_name}")
-    data = JSON.parse(response.body)
-    @current_list = data["ids"]
-    
-    # go again (and again, and again...) if there are more things still to fetch
-    # default retrieval limit per request is 5,000 (correct at time of writing)
-    while data["next_cursor_str"] != "0"
-      response = @twitter.get("/1.1/friends/ids.json?screen_name=#{@twitter.screen_name}&cursor=#{data["next_cursor_str"]}")
-      data = JSON.parse(response.body)
-      @current_list += data["ids"]
-    end
+    @current_list = get_friends(@twitter.screen_name)
     
     if @user.friend_ids.nil? or @user.friend_ids.empty?
       #new user, hello!
       @user.friend_ids = @current_list
-      @user.save!
+      @user.save
     else
       #welcome back, let's check things
       unless @user.friend_ids == @current_list
@@ -73,7 +63,8 @@ class Unfriendly < Sinatra::Base
         
         if @user.following_changes.empty? or (@followed != @user.following_changes.last.followed or @unfollowed != @user.following_changes.last.unfollowed)
           @user.friend_ids = @current_list
-          @user.update
+          @user.save
+          
           @change = FollowingChange.new
           @change.followed = @followed
           @change.unfollowed = @unfollowed
@@ -92,29 +83,38 @@ class Unfriendly < Sinatra::Base
         end
       end
       
-      if @followed && @followed.count > 0
-        data = []
-        @followed.each_slice(100) do |batch|
-          response = @twitter.get("/1.1/users/lookup.json?user_id=#{batch.join(",")}")
-          data += JSON.parse(response.body)
-        end
-        @followed_accounts = data.map{ |x| {:screen_name => x["screen_name"], :name => x["name"], :profile_image => x["profile_image_url"], :protected => x["protected"]}}
-      end
-      
-      if @unfollowed && @unfollowed.count > 0
-        data = []
-        @unfollowed.each_slice(100) do |batch|
-          response = @twitter.get("/1.1/users/lookup.json?user_id=#{batch.join(",")}")
-          data += JSON.parse(response.body)
-        end
-        @unfollowed_accounts = data.map{ |x| {:screen_name => x["screen_name"], :name => x["name"], :profile_image => x["profile_image_url"], :protected => x["protected"]}}
-      end
+      @followed_accounts = process_follower_ids(@followed) if @followed && @followed.count > 0
+      @unfollowed_accounts = process_follower_ids(@unfollowed) if @unfollowed && @unfollowed.count > 0
     end
     
     haml(:check)
   end
   
   private
+    def get_friends(screen_name)
+      response = @twitter.get("/1.1/friends/ids.json?screen_name=#{screen_name}")
+      data = JSON.parse(response.body)
+      list = data["ids"]
+
+      # go again (and again, and again...) if there are more things still to fetch
+      # default retrieval limit per request is 5,000 (correct at time of writing)
+      while data["next_cursor_str"] != "0"
+        response = @twitter.get("/1.1/friends/ids.json?screen_name=#{screen_name}&cursor=#{data["next_cursor_str"]}")
+        data = JSON.parse(response.body)
+        list += data["ids"]
+      end
+      list
+    end
+    
+    def process_follower_ids(id_list)
+      data = []
+      id_list.each_slice(100) do |batch|
+        response = @twitter.get("/1.1/users/lookup.json?user_id=#{batch.join(",")}")
+        data += JSON.parse(response.body)
+      end
+      data.map{ |x| {:screen_name => x["screen_name"], :name => x["name"], :profile_image => x["profile_image_url"], :protected => x["protected"]}}
+    end
+    
     def analyse_changes(s1, s2)
       followed = []
       unfollowed = []
