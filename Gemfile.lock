@@ -40,8 +40,6 @@ GEM
       rack (~> 1.5, >= 1.5.2)
       rack-protection (~> 1.4)
       tilt (~> 1.3, >= 1.3.4)
-    sinatra-flash (0.3.0)
-      sinatra (>= 1.0.0)
     tilt (1.3.7)
     tzinfo (0.3.37)
 
@@ -60,4 +58,3 @@ DEPENDENCIES
   rake
   simplecov (= 0.7.1)
   sinatra
-  sinatra-flash

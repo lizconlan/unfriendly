@@ -1,10 +1,8 @@
 require 'sinatra'
-require 'sinatra/flash'
 require 'mongoid'
 require 'set'
 
 class Unfriendly < Sinatra::Base
-  register Sinatra::Flash
   enable :sessions
   set :session_secret, ENV["session_secret"] || "secret string"
   
@@ -17,6 +15,7 @@ class Unfriendly < Sinatra::Base
   Mongoid.load!("./config/mongo.yml")
   
   get "/" do
+    redirect "check" if session[:twitter]
     haml(:index)
   end
   
@@ -38,7 +37,6 @@ class Unfriendly < Sinatra::Base
   
   get "/logout/?" do
     session.clear
-    flash.next[:success] =  "You've logged out"
     redirect '/'
   end
   
@@ -95,10 +93,13 @@ class Unfriendly < Sinatra::Base
       response = @twitter.get("/1.1/friends/ids.json?screen_name=#{screen_name}")
       data = JSON.parse(response.body)
       list = data["ids"]
-
+      if list.nil?
+        raise data.inspect
+      end
+      
       # go again (and again, and again...) if there are more things still to fetch
       # default retrieval limit per request is 5,000 (correct at time of writing)
-      while data["next_cursor_str"] != "0"
+      while data["next_cursor_str"] and data["next_cursor_str"] != "0"
         response = @twitter.get("/1.1/friends/ids.json?screen_name=#{screen_name}&cursor=#{data["next_cursor_str"]}")
         data = JSON.parse(response.body)
         list += data["ids"]

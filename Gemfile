@@ -10,7 +10,6 @@ gem 'mongoid'
 gem 'bson'
 gem 'bson_ext'
 gem 'haml'
-gem 'sinatra-flash'
 
 group :test do
   gem 'minitest', :require => 'minitest'

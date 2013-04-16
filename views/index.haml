@@ -1,7 +1,9 @@
-=styled_flash
-
-- unless session[:user_name]
-  %a{:href => "twitter_login"}
-    %img{:src => "/images/sign-in-with-twitter-gray.png", :border => "0"}
-- else
-  oh, hai
+%div.jumbotron
+  %h1
+    Tired of the Twitter unfollow bug?
+  %p.lead
+    Keep an eye on what your Twitter account is up to!
+    %br
+    Use this app to take snapshots of which accounts you are following and see what's changed at a glance.
+  - unless session[:user_name]
+    %a{:class => "btn btn-large btn-success", :href => "twitter_login"} Sign in with Twitter
