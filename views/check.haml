@@ -1,11 +1,10 @@
-=styled_flash
+%h1= "Hello, #{@user.screen_name}!"
 
-%p= "Hello #{@user.screen_name}"
-  
 %p= "You currently follow #{@current_list.count} people on Twitter."
 
 -if @change
-  %p= "Since #{@change.check_date.strftime("%B %d, %Y")}..."
+  %br
+  %h4= "Since #{@change.check_date.strftime("%B %d, %Y")}..."
 
 .activity
   -if @followed_accounts
