@@ -46,7 +46,11 @@ class Unfriendly < Sinatra::Base
     @twitter = session[:twitter]
     @user = User.find_or_create_by(:twitter_id => @twitter.user_id, :screen_name => @twitter.screen_name)
     
-    @current_list = get_friends(@twitter.screen_name)
+    if @user.following_changes and !@user.following_changes.empty? and @user.following_changes.last.check_date.strftime("%Y-%m-%d") == Time.now.strftime("%Y-%m-%d")
+      @current_list = @user.friend_ids
+    else
+      @current_list = get_friends(@twitter.screen_name)
+    end
     
     if @user.friend_ids.nil? or @user.friend_ids.empty?
       #new user, hello!
@@ -98,6 +102,7 @@ class Unfriendly < Sinatra::Base
   
   private
     def get_friends(screen_name)
+      p "hitting the Twitter API"
       response = @twitter.get("/1.1/friends/ids.json?screen_name=#{screen_name}")
       data = JSON.parse(response.body)
       list = data["ids"]
