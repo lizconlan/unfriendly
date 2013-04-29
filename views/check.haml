@@ -4,7 +4,10 @@
 
 -if @change
   %br
-  %h4= "Since #{@change.check_date.strftime("%B %d, %Y")}..."
+  - if @prev_change
+    %h4= "Since #{@prev_change.check_date.strftime("%B %d, %Y")}..."
+  - else
+    %h4= "Since you last looked..."
 
 .activity
   -if @followed_accounts

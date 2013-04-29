@@ -63,18 +63,26 @@ class Unfriendly < Sinatra::Base
           @user.friend_ids = @current_list
           @user.save
           
+          changes = @user.following_changes.dup
+          @prev_change = changes.pop
+          
           @change = FollowingChange.new
           @change.followed = @followed
           @change.unfollowed = @unfollowed
           @change.check_date = Time.now()
           @user.following_changes << @change
         else
-          @change = @user.following_changes.last
+          changes = @user.following_changes.dup
+          @change = changes.pop
+          @prev_change = changes.pop
+          
           @followed = @change.followed
           @unfollowed = @change.unfollowed
         end
       else
-        @change = @user.following_changes.last
+        changes = @user.following_changes.dup
+        @change = changes.pop
+        @prev_change = changes.pop
         if @change
           @followed = @change.followed
           @unfollowed = @change.unfollowed
