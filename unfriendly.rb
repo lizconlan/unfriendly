@@ -58,11 +58,11 @@ class Unfriendly < Sinatra::Base
       @user.save
     else
       #welcome back, let's check things
+      changes = @user.following_changes.dup
       unless @user.friend_ids == @current_list
         change_data = analyse_changes(Set.new(@user.friend_ids), Set.new(@current_list))
         @followed = change_data[:followed]
         @unfollowed = change_data[:unfollowed]
-        changes = @user.following_changes.dup
         
         if @user.following_changes.empty? or (@followed != @user.following_changes.last.followed or @unfollowed != @user.following_changes.last.unfollowed)
           @user.friend_ids = @current_list
