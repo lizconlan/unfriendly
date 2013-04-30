@@ -1,6 +1,7 @@
 require 'sinatra'
 require 'mongoid'
 require 'set'
+require 'logger'
 
 class Unfriendly < Sinatra::Base
   enable :sessions
@@ -11,6 +12,7 @@ class Unfriendly < Sinatra::Base
   
   # start the server if ruby file executed directly
   run! if app_file == $0
+  LOGGER = Logger.new(STDOUT)
   
   Mongoid.load!("./config/mongo.yml")
   
@@ -49,62 +51,84 @@ class Unfriendly < Sinatra::Base
     if @user.following_changes and !@user.following_changes.empty? and @user.following_changes.last.check_date.strftime("%Y-%m-%d") == Time.now.strftime("%Y-%m-%d")
       @current_list = @user.friend_ids
     else
-      @current_list = get_friends(@twitter.screen_name)
+      begin
+        @current_list = get_friends(@twitter.screen_name)
+      rescue
+        @current_list = nil
+      end
     end
     
-    if @user.friend_ids.nil? or @user.friend_ids.empty?
-      #new user, hello!
-      @user.friend_ids = @current_list
-      @user.save
-    else
-      #welcome back, let's check things
-      changes = @user.following_changes.dup
-      unless @user.friend_ids == @current_list
-        change_data = analyse_changes(Set.new(@user.friend_ids), Set.new(@current_list))
-        @followed = change_data[:followed]
-        @unfollowed = change_data[:unfollowed]
+    if @current_list
+      if @user.friend_ids.nil? or @user.friend_ids.empty?
+        #new user, hello!
+        @user.friend_ids = @current_list
+        @user.save
+      else
+        #welcome back, let's check things
+        changes = @user.following_changes.dup
+        unless @user.friend_ids == @current_list
+          change_data = analyse_changes(Set.new(@user.friend_ids), Set.new(@current_list))
+          @followed = change_data[:followed]
+          @unfollowed = change_data[:unfollowed]
         
-        if @user.following_changes.empty? or (@followed != @user.following_changes.last.followed or @unfollowed != @user.following_changes.last.unfollowed)
-          @user.friend_ids = @current_list
-          @user.save
+          if @user.following_changes.empty? or (@followed != @user.following_changes.last.followed or @unfollowed != @user.following_changes.last.unfollowed)
+            @user.friend_ids = @current_list
+            @user.save
           
-          @prev_change = changes.pop
+            @prev_change = changes.pop
           
-          @change = FollowingChange.new
-          @change.followed = @followed
-          @change.unfollowed = @unfollowed
-          @change.check_date = Time.now()
-          @user.following_changes << @change
+            @change = FollowingChange.new
+            @change.followed = @followed
+            @change.unfollowed = @unfollowed
+            @change.check_date = Time.now()
+            @user.following_changes << @change
+          else
+            @change = changes.pop
+            @prev_change = changes.pop
+            @followed = @change.followed
+            @unfollowed = @change.unfollowed
+          end
         else
           @change = changes.pop
           @prev_change = changes.pop
-          @followed = @change.followed
-          @unfollowed = @change.unfollowed
+          if @change
+            @followed = @change.followed
+            @unfollowed = @change.unfollowed
+          end
         end
-      else
-        @change = changes.pop
-        @prev_change = changes.pop
-        if @change
-          @followed = @change.followed
-          @unfollowed = @change.unfollowed
+        
+        begin
+          @followed_accounts = process_follower_ids(@followed) if @followed && @followed.count > 0
+        rescue
+          @followed_accounts = "error"
+        end
+        
+        begin
+          @unfollowed_accounts = process_follower_ids(@unfollowed) if @unfollowed && @unfollowed.count > 0
+        rescue
+          @unfolowed_accounts = "error"
         end
       end
-      
-      @followed_accounts = process_follower_ids(@followed) if @followed && @followed.count > 0
-      @unfollowed_accounts = process_follower_ids(@unfollowed) if @unfollowed && @unfollowed.count > 0
     end
-    
     haml(:check)
   end
   
   private
     def get_friends(screen_name)
-      p "hitting the Twitter API"
-      response = @twitter.get("/1.1/friends/ids.json?screen_name=#{screen_name}")
+      LOGGER.info("Getting a friend list from the Twitter API on behalf of #{screen_name}")
+      begin
+        response = @twitter.get("/1.1/friends/ids.json?screen_name=#{screen_name}")
+      rescue => e
+        LOGGER.error("uncaught #{e} exception while handling connection: #{e.message}")
+        LOGGER.error("Stack trace: #{backtrace.map {|l| "  #{l}\n"}.join}")
+        raise e
+      end
+      
       data = JSON.parse(response.body)
       list = data["ids"]
       if list.nil?
-        raise data.inspect
+        LOGGER.error("unexpected response from Twitter - #{data.to_s}")
+        raise "Twitter not co-operating"
       end
       
       # go again (and again, and again...) if there are more things still to fetch
@@ -120,7 +144,14 @@ class Unfriendly < Sinatra::Base
     def process_follower_ids(id_list)
       data = []
       id_list.each_slice(100) do |batch|
-        response = @twitter.get("/1.1/users/lookup.json?user_id=#{batch.join(",")}")
+        LOGGER.info("Looking up user data from the Twitter API on behalf of #{@user.screen_name}")
+        begin
+          response = @twitter.get("/1.1/users/lookup.json?user_id=#{batch.join(",")}")
+        rescue => e
+          LOGGER.error("uncaught #{e} exception while handling connection: #{e.message}")
+          LOGGER.error("Stack trace: #{backtrace.map {|l| "  #{l}\n"}.join}")
+          raise e
+        end
         
         js = JSON.parse(response.body)
         if js.class == Hash

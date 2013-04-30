@@ -1,20 +1,28 @@
 %h1= "Hello, #{@user.screen_name}!"
 
-%p= "You currently follow #{@current_list.count} people on Twitter."
+- if @current_list.nil? or (@followed_accounts == "error" && @unfollowed_accounts == "error")
+  %p= "There was a problem accessing Twitter, please try again later"
+- else
+  %p= "You currently follow #{@current_list.count} people on Twitter."
 
--if @change
-  %br
-  - if @prev_change
-    %h4= "Since #{@prev_change.check_date.strftime("%B %d, %Y")}..."
-  - else
-    %h4= "Since you last looked..."
+  -if @change
+    %br
+    - if @prev_change
+      %h4= "Since #{@prev_change.check_date.strftime("%B %d, %Y")}..."
+    - else
+      %h4= "Since you last looked..."
 
-.activity
-  -if @followed_accounts
-    %p= "You started following #{@followed.count} new accounts:"
-    =haml(:"_account", :locals => {:accounts => @followed_accounts})
+  .activity
+    -if @followed_accounts
+      - if @followed_accounts == "error"
+        There was a problem retrieving this information from Twitter, please try again later
+      - else
+        %p= "You started following #{@followed.count} new accounts:"
+        =haml(:"_account", :locals => {:accounts => @followed_accounts})
   
-  -if @unfollowed_accounts
-    %p= "You unfollowed #{@unfollowed.count} accounts:"
-    =haml(:"_account", :locals => {:accounts => @unfollowed_accounts})
-  
+    -if @unfollowed_accounts
+      - if @unfollowed_accounts == "error"
+        There was a problem retrieving this information from Twitter, please try again later
+      - else
+        %p= "You unfollowed #{@unfollowed.count} accounts:"
+        =haml(:"_account", :locals => {:accounts => @unfollowed_accounts})

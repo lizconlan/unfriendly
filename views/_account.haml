@@ -1,7 +1,10 @@
 %ul
   - accounts.each do |account|
     %li
-      %a{:href=> "http://twitter.com/#{account[:screen_name]}"}
-        %img{:src => account[:profile_image]}
-        =account[:name]
-        ="(@#{account[:screen_name]})"
+      - if account[:screen_name]
+        %a{:href=> "http://twitter.com/#{account[:screen_name]}"}
+          %img{:src => account[:profile_image]}
+          =account[:name]
+          ="(@#{account[:screen_name]})"
+      -else
+        Unknown user, may have left Twitter
