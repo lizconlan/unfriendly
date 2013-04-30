@@ -134,8 +134,20 @@ class Unfriendly < Sinatra::Base
       # go again (and again, and again...) if there are more things still to fetch
       # default retrieval limit per request is 5,000 (correct at time of writing)
       while data["next_cursor_str"] and data["next_cursor_str"] != "0"
-        response = @twitter.get("/1.1/friends/ids.json?screen_name=#{screen_name}&cursor=#{data["next_cursor_str"]}")
+        LOGGER.info("Getting a friend list from the Twitter API on behalf of #{screen_name}")
+        begin
+          response = @twitter.get("/1.1/friends/ids.json?screen_name=#{screen_name}&cursor=#{data["next_cursor_str"]}")
+        rescue => e
+          LOGGER.error("uncaught #{e} exception while handling connection: #{e.message}")
+          LOGGER.error("Stack trace: #{backtrace.map {|l| "  #{l}\n"}.join}")
+          raise e
+        end
+        
         data = JSON.parse(response.body)
+        if data["ids"].nil?
+          LOGGER.error("unexpected response from Twitter - #{data.to_s}")
+          raise "Twitter not co-operating"
+        end
         list += data["ids"]
       end
       list
