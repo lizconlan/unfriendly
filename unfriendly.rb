@@ -62,12 +62,12 @@ class Unfriendly < Sinatra::Base
         change_data = analyse_changes(Set.new(@user.friend_ids), Set.new(@current_list))
         @followed = change_data[:followed]
         @unfollowed = change_data[:unfollowed]
+        changes = @user.following_changes.dup
         
         if @user.following_changes.empty? or (@followed != @user.following_changes.last.followed or @unfollowed != @user.following_changes.last.unfollowed)
           @user.friend_ids = @current_list
           @user.save
           
-          changes = @user.following_changes.dup
           @prev_change = changes.pop
           
           @change = FollowingChange.new
@@ -76,15 +76,12 @@ class Unfriendly < Sinatra::Base
           @change.check_date = Time.now()
           @user.following_changes << @change
         else
-          changes = @user.following_changes.dup
           @change = changes.pop
           @prev_change = changes.pop
-          
           @followed = @change.followed
           @unfollowed = @change.unfollowed
         end
       else
-        changes = @user.following_changes.dup
         @change = changes.pop
         @prev_change = changes.pop
         if @change
@@ -124,7 +121,13 @@ class Unfriendly < Sinatra::Base
       data = []
       id_list.each_slice(100) do |batch|
         response = @twitter.get("/1.1/users/lookup.json?user_id=#{batch.join(",")}")
-        data += JSON.parse(response.body)
+        
+        js = JSON.parse(response.body)
+        if js.class == Hash
+          data += [js]
+        else
+          data += js
+        end
       end
       data.map{ |x| {:screen_name => x["screen_name"], :name => x["name"], :profile_image => x["profile_image_url"], :protected => x["protected"]}}
     end
