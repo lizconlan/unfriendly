@@ -52,6 +52,16 @@ class TwitterTest < MiniTest::Spec
         error = create_with_array.call rescue $!
         error.message.must_equal "received Array, expected a String or a Hash"
       end
+      
+      it "must set the API version to 1.1 by default" do
+        twitter = Twitter.new("fake_token", "fake_secret", {:screen_name => "test", :twitter_id => "1234"})
+        twitter.api_version.must_equal "1.1"
+      end
+      
+      it "must set the API version if it is specified" do
+        twitter = Twitter.new("fake_token", "fake_secret", {:screen_name => "test", :twitter_id => "1234"}, "42")
+        twitter.api_version.must_equal "42"
+      end
     end
     
     describe "in general" do
@@ -69,10 +79,17 @@ class TwitterTest < MiniTest::Spec
         @fake_access_token = @@fake_access_token
       end
       
-      it "must call OAuth.request when asked to get a Twitter url" do
-        url = "/1.1/friends/ids.json?screen_name=test"
-        @oauth.expects(:request).with(:get, url, @fake_access_token, { :scheme => :query_string })
+      it "must call OAuth.request with :get when asked to get a Twitter url" do
+        url = "friends/ids.json?screen_name=test"
+        @oauth.expects(:request).with(:get, "/1.1/#{url}", @fake_access_token, { :scheme => :query_string })
         @twitter.get(url)
+      end
+      
+      it "must call OAuth.request with :post when asked to post to a Twitter url" do
+        url = "/statuses/update.json"
+        data = "this is a test!"
+        @oauth.expects(:request).with(:post, "/1.1#{url}", @fake_access_token, {}, CGI::escape(data) )
+        @twitter.post(url, data)
       end
       
       it "must retrieve the screen_name from the access_token when asked for screen_name" do

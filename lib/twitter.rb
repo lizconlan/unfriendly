@@ -40,11 +40,12 @@ class Twitter
   end
   
   def get(url)
-    Twitter.oauth.request(:get, "/#{@api_version}/#{url}".squeeze("//"), @access_token, { :scheme => :query_string })
+    Twitter.oauth.request(:get, "/#{@api_version}/#{url}".squeeze("/"), @access_token, { :scheme => :query_string })
   end
   
   def post(url, post_data)
-    Twitter.oauth.request(:post, "/#{@api_version}/#{url}".squeeze("//"), @access_token, {}, post_data)
+    data = CGI::escape(post_data)
+    Twitter.oauth.request(:post, "/#{@api_version}/#{url}".squeeze("/"), @access_token, {}, data)
   end
   
   def screen_name
