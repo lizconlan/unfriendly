@@ -52,11 +52,6 @@ class Twitter
     @access_token.params[:user_id]
   end
   
-  def serialized_token
-    yaml = @access_token.to_yaml
-    yaml.gsub!(Twitter.config[:access_token], "REDACTED")
-    yaml.gsub!(Twitter.config[:access_secret], "REDACTED")
-  end
   
   private
     def get_access_token(token, secret, verifier)      
