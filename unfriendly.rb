@@ -1,3 +1,5 @@
+#encoding: utf-8
+
 require 'sinatra'
 require 'mongoid'
 require 'set'
@@ -12,6 +14,7 @@ class Unfriendly < Sinatra::Base
   
   # start the server if ruby file executed directly
   run! if app_file == $0
+  
   LOGGER = Logger.new(STDOUT)
   
   Mongoid.load!("./config/mongo.yml")
@@ -34,6 +37,11 @@ class Unfriendly < Sinatra::Base
     session[:token] = nil
     session[:secret] = nil
     session[:twitter] = @twitter
+    session[:verifier] = params[:oauth_verifier]
+    
+    @user = User.find_or_create_by(:twitter_id => @twitter.user_id, :screen_name => @twitter.screen_name)
+    @user.save
+    
     redirect "/check"
   end
   
@@ -45,10 +53,12 @@ class Unfriendly < Sinatra::Base
   get "/check/?" do
     redirect "/twitter_login" unless session[:twitter]
     
-    @twitter = session[:twitter]
+    @twitter = session[:twitter]    
     @user = User.find_or_create_by(:twitter_id => @twitter.user_id, :screen_name => @twitter.screen_name)
     
-    if @user.following_changes and !@user.following_changes.empty? and @user.following_changes.last.check_date.strftime("%Y-%m-%d") == Time.now.strftime("%Y-%m-%d")
+    if @user.following_changes \
+        and !@user.following_changes.empty? \
+        and @user.following_changes.last.check_date.strftime("%Y-%m-%d") == Time.now.strftime("%Y-%m-%d")
       @current_list = @user.friend_ids
     else
       begin
@@ -70,13 +80,14 @@ class Unfriendly < Sinatra::Base
           change_data = analyse_changes(Set.new(@user.friend_ids), Set.new(@current_list))
           @followed = change_data[:followed]
           @unfollowed = change_data[:unfollowed]
-        
-          if @user.following_changes.empty? or (@followed != @user.following_changes.last.followed or @unfollowed != @user.following_changes.last.unfollowed)
-            @user.friend_ids = @current_list
+          
+          if @user.following_changes.empty? \
+              or (@followed != @user.following_changes.last.followed \
+              or @unfollowed != @user.following_changes.last.unfollowed)
             @user.save
-          
+            
             @prev_change = changes.pop
-          
+            
             @change = FollowingChange.new
             @change.followed = @followed
             @change.unfollowed = @unfollowed

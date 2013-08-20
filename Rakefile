@@ -1,0 +1,10 @@
+require 'bundler'
+Bundler.setup
+
+require 'rake/testtask'
+
+Rake::TestTask.new do |t|
+  t.pattern = "test/**/*_test.rb"
+end
+
+# Mongoid.load!("./config/mongo.yml")

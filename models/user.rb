@@ -1,13 +1,14 @@
+#encoding: utf-8
+
 require 'mongoid'
 
 class User
   include Mongoid::Document
   embeds_many :following_changes
   
-  field :email, type: String
   field :screen_name, type: String
   field :twitter_id, type: String
-  field :verifier, type: String
+  field :email, type: String
   field :friend_ids, type: Array
 end
 
