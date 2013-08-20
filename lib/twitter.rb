@@ -1,7 +1,9 @@
 require 'yaml'
 require 'oauth'
 
-class Twitter    
+class Twitter 
+  attr_reader :api_version
+  
   def self.config
     @config ||= YAML::load(File.open './config/oauth.yml')
   end
