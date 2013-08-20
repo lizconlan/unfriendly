@@ -40,8 +40,8 @@ class Twitter
     Twitter.oauth.request(:get, url, @access_token, { :scheme => :query_string })
   end
   
-  def dm_self(message)
-    Twitter.oauth.request(:post, "/1.1/statuses/update?status=d%20#{self.user_id}%20#{message.gsub(" ", "%20")}", @access_token)
+  def post(url, post_data)
+    Twitter.oauth.request(:post, url, @access_token, {}, post_data)
   end
   
   def screen_name
