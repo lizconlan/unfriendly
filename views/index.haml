@@ -1,9 +1,10 @@
 %div.jumbotron
-  %h1
-    Tired of the Twitter unfollow bug?
+  %h2
+    Catch yourself thinking... but I'm sure I was already following..?
   %p.lead
-    Keep an eye on what your Twitter account is up to!
+    %b Then this is for you!
     %br
-    Use this app to take snapshots of which accounts you are following and see what's changed at a glance.
+    %br
+    Use this app to take snapshots of which accounts you've un-friended and see what's changed at a glance.
   - unless session[:user_name]
     %a{:class => "btn btn-large btn-success", :href => "twitter_login"} Sign in with Twitter
