@@ -10,10 +10,7 @@ class TwitterTest < MiniTest::Spec
         :access_token: dummy_access_token
         :access_secret: dummy_access_secret
       |)
-      Twitter.stub :config, mock_config do
-        Twitter.config[:access_token].must_equal "dummy_access_token"
-        Twitter.config[:consumer_secret].must_equal "dummy_consumer_secret"
-      end
+      Twitter.stubs(:config).returns(mock_config)
       
       @@oauth ||= Twitter.oauth
       @oauth = @@oauth
