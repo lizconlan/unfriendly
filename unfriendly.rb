@@ -128,7 +128,7 @@ class Unfriendly < Sinatra::Base
     def get_friends(screen_name)
       LOGGER.info("Getting a friend list from the Twitter API on behalf of #{screen_name}")
       begin
-        response = @twitter.get("/1.1/friends/ids.json?screen_name=#{screen_name}")
+        response = @twitter.get("friends/ids.json?screen_name=#{screen_name}")
       rescue => e
         LOGGER.error("uncaught #{e} exception while handling connection: #{e.message}")
         LOGGER.error("Stack trace: #{backtrace.map {|l| "  #{l}\n"}.join}")
@@ -147,7 +147,7 @@ class Unfriendly < Sinatra::Base
       while data["next_cursor_str"] and data["next_cursor_str"] != "0"
         LOGGER.info("Getting a friend list from the Twitter API on behalf of #{screen_name}")
         begin
-          response = @twitter.get("/1.1/friends/ids.json?screen_name=#{screen_name}&cursor=#{data["next_cursor_str"]}")
+          response = @twitter.get("friends/ids.json?screen_name=#{screen_name}&cursor=#{data["next_cursor_str"]}")
         rescue => e
           LOGGER.error("uncaught #{e} exception while handling connection: #{e.message}")
           LOGGER.error("Stack trace: #{backtrace.map {|l| "  #{l}\n"}.join}")
@@ -169,7 +169,7 @@ class Unfriendly < Sinatra::Base
       id_list.each_slice(100) do |batch|
         LOGGER.info("Looking up user data from the Twitter API on behalf of #{@user.screen_name}")
         begin
-          response = @twitter.get("/1.1/users/lookup.json?user_id=#{batch.join(",")}")
+          response = @twitter.get("users/lookup.json?user_id=#{batch.join(",")}")
         rescue => e
           LOGGER.error("uncaught #{e} exception while handling connection: #{e.message}")
           LOGGER.error("Stack trace: #{backtrace.map {|l| "  #{l}\n"}.join}")

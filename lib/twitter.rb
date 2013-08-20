@@ -18,7 +18,8 @@ class Twitter
     oauth.get_request_token(:oauth_callback => url)
   end
   
-  def initialize(token, secret, input)
+  def initialize(token, secret, input, api_version="1.1")
+    @api_version = api_version
     if input.is_a?(String)
       @access_token = get_access_token(token, secret, input)
     elsif input.is_a?(Hash)
@@ -37,11 +38,11 @@ class Twitter
   end
   
   def get(url)
-    Twitter.oauth.request(:get, url, @access_token, { :scheme => :query_string })
+    Twitter.oauth.request(:get, "/#{@api_version}/#{url}".squeeze("//"), @access_token, { :scheme => :query_string })
   end
   
   def post(url, post_data)
-    Twitter.oauth.request(:post, url, @access_token, {}, post_data)
+    Twitter.oauth.request(:post, "/#{@api_version}/#{url}".squeeze("//"), @access_token, {}, post_data)
   end
   
   def screen_name
