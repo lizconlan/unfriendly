@@ -2,7 +2,7 @@ require './test/minitest_helper.rb'
 require './lib/twitter'
 
 class TwitterTest < MiniTest::Spec
-  describe Twitter, "without hitting Twitter's API" do
+  describe Twitter do
     before do
       mock_config = YAML::load(%Q|
         :consumer_key: dummy_consumer_key
@@ -28,35 +28,25 @@ class TwitterTest < MiniTest::Spec
     end
     
     describe "creating a new object" do
-      it "must call OAuth::RequestToken.new if passed a verifier string" do
+      before do
         mock_request_token = mock("request_token")
         mock_request_token.responds_like_instance_of(OAuth::RequestToken)
         mock_request_token.expects(:get_access_token).with(:oauth_verifier => "verifier").returns("fake_access_token")
         OAuth::RequestToken.expects(:new).returns(mock_request_token)
-        
+      end
+      
+      it "must call OAuth::RequestToken.new if passed a verifier string" do
         twitter = Twitter.new("fake_token", "fake_secret", "verifier")
         twitter.must_be_instance_of(Twitter)
       end
       
-      it "must call OAuth::AccessToken.from_hash if passed a hash" do
-        twitter = Twitter.new("fake_token", "fake_secret", {:screen_name => "test", :twitter_id => "1234"})
-        twitter.must_be_instance_of(Twitter)
-      end
-      
-      it "must raise an error if passed anything else" do
-        create_with_array = lambda { Twitter.new("fake_token", "fake_secret", ["this", "should", "fail"]) }
-        create_with_array.must_raise RuntimeError
-        error = create_with_array.call rescue $!
-        error.message.must_equal "received Array, expected a String or a Hash"
-      end
-      
       it "must set the API version to 1.1 by default" do
-        twitter = Twitter.new("fake_token", "fake_secret", {:screen_name => "test", :twitter_id => "1234"})
+        twitter = Twitter.new("fake_token", "fake_secret", "verifier")
         twitter.api_version.must_equal "1.1"
       end
       
       it "must set the API version if it is specified" do
-        twitter = Twitter.new("fake_token", "fake_secret", {:screen_name => "test", :twitter_id => "1234"}, "42")
+        twitter = Twitter.new("fake_token", "fake_secret", "verifier", "42")
         twitter.api_version.must_equal "42"
       end
     end
