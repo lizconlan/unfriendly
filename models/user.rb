@@ -10,6 +10,7 @@ class User
   field :twitter_id, type: String
   field :email, type: String
   field :friend_ids, type: Array
+  field :token, type: String
 end
 
 class FollowingChange
