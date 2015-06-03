@@ -62,7 +62,7 @@ class Unfriendly < Sinatra::Base
       @current_list = @user.friend_ids
     else
       begin
-        @current_list = get_friends(@twitter.screen_name)
+        @current_list = @twitter.get_friends
       rescue
         @current_list = nil
       end
@@ -117,7 +117,7 @@ class Unfriendly < Sinatra::Base
         begin
           @unfollowed_accounts = process_follower_ids(@unfollowed) if @unfollowed && @unfollowed.count > 0
         rescue
-          @unfolowed_accounts = "error"
+          @unfollowed_accounts = "error"
         end
       end
     end
@@ -125,78 +125,48 @@ class Unfriendly < Sinatra::Base
   end
 
   private
-    def get_friends(screen_name)
-      LOGGER.info("Getting a friend list from the Twitter API on behalf of #{screen_name}")
-      begin
-        response = @twitter.get("friends/ids.json?screen_name=#{screen_name}")
-      rescue => e
-        log_and_rethrow(e)
-      end
 
-      data = JSON.parse(response.body)
-      list = data["ids"]
-      if list.nil?
-        LOGGER.error("unexpected response from Twitter - #{data.to_s}")
-        raise "Twitter not co-operating"
-      end
+  def get_friends_list(screen_name)
+    data = @twitter.get_friends_data(screen_name)
+    list = data["ids"]
 
-      # go again (and again, and again...) if there are more things still to fetch
-      # default retrieval limit per request is 5,000 (correct at time of writing)
-      while data["next_cursor_str"] and data["next_cursor_str"] != "0"
-        LOGGER.info("Getting a friend list from the Twitter API on behalf of #{screen_name}")
-        begin
-          response = @twitter.get("friends/ids.json?screen_name=#{screen_name}&cursor=#{data["next_cursor_str"]}")
-        rescue => e
-          log_and_rethrow(e)
-        end
-
-        data = JSON.parse(response.body)
-        if data["ids"].nil?
-          LOGGER.error("unexpected response from Twitter - #{data.to_s}")
-          raise "Twitter not co-operating"
-        end
-        list += data["ids"]
-      end
-      list
+    while data["next_cursor_str"] and data["next_cursor_str"] != "0"
+      data = @twitter.get_friends_data(screen_name, data["next_cursor_str"])
+      list += data["ids"]
     end
+    list
+  end
 
-    def process_follower_ids(id_list)
-      data = []
-      id_list.each_slice(100) do |batch|
-        LOGGER.info("Looking up user data from the Twitter API on behalf of #{@user.screen_name}")
-        begin
-          response = @twitter.get("users/lookup.json?user_id=#{batch.join(",")}")
-        rescue => e
-          log_and_rethrow(e)
-        end
+  def process_follower_ids(id_list)
+    data = []
+    id_list.each_slice(100) do |batch|
+      js = @twitter.get_batch_user_info(batch)
 
-        js = JSON.parse(response.body)
-        if js.class == Hash
-          data += [js]
-        else
-          data += js
-        end
+      if js.class == Hash
+        data += [js]
+      else
+        data += js
       end
-      data.map{ |x| {:screen_name => x["screen_name"], :name => x["name"], :profile_image => x["profile_image_url"], :protected => x["protected"]}}
     end
+    data.map{|x| {
+      :screen_name => x["screen_name"],
+      :name => x["name"],
+      :profile_image => x["profile_image_url"],
+      :protected => x["protected"]
+    }}
+  end
 
-    def analyse_changes(s1, s2)
-      followed = []
-      unfollowed = []
-      diff = (s1^s2).to_a
-      diff.each do |change|
-        if s1.include?(change)
-          unfollowed << change
-        else
-          followed << change
-        end
+  def analyse_changes(s1, s2)
+    followed = []
+    unfollowed = []
+    diff = (s1^s2).to_a
+    diff.each do |change|
+      if s1.include?(change)
+        unfollowed << change
+      else
+        followed << change
       end
-      {:followed => followed, :unfollowed => unfollowed}
     end
-
-    def log_and_rethrow(err)
-      LOGGER.error("uncaught #{err} exception while handling connection: #{err.message}")
-      LOGGER.error("Stack trace: #{backtrace.map {|l| "  #{l}\n"}.join}")
-      raise err
-    end
+    {:followed => followed, :unfollowed => unfollowed}
+  end
 end
