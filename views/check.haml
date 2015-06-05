@@ -14,15 +14,9 @@
 
   .activity
     -if @followed_accounts
-      - if @followed_accounts == "error"
-        There was a problem retrieving this information from Twitter, please try again later
-      - else
-        %p= "You started following #{@followed.count} new accounts:"
-        =haml(:"_account", :locals => {:accounts => @followed_accounts})
+      %p= "You started following #{@followed.count} new accounts:"
+      =haml(:"_account", :locals => {:accounts => @followed_accounts})
   
     -if @unfollowed_accounts
-      - if @unfollowed_accounts == "error"
-        There was a problem retrieving this information from Twitter, please try again later
-      - else
-        %p= "You unfollowed #{@unfollowed.count} accounts:"
-        =haml(:"_account", :locals => {:accounts => @unfollowed_accounts})
+      %p= "You unfollowed #{@unfollowed.count} accounts:"
+      =haml(:"_account", :locals => {:accounts => @unfollowed_accounts})

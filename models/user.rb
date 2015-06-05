@@ -10,6 +10,11 @@ class User
   field :twitter_id, type: String
   field :email, type: String
   field :friend_ids, type: Array
+  field :token, type: String
+  
+  def new?
+    friend_ids.nil? or friend_ids.empty?
+  end
 end
 
 class FollowingChange
